@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.pyc
+.env
+data/catalog.sqlite*
+data/snapshots/
+data/readiness.csv
+data/readiness.json
+data/audit-example.json
+models/weights/
+uploads/
+dist/
+*.egg-info/

@@ -1,0 +1,21 @@
+{
+  "version": "prototype-2026-10-06.1",
+  "coverage": "limited_curated_rules",
+  "rules": [
+    {
+      "rule_id": "warfarin-aspirin-bleeding",
+      "ingredient_a": "11289",
+      "ingredient_b": "1191",
+      "title": "Warfarin and aspirin: documented increased bleeding risk",
+      "description": "Warfarin labeling lists aspirin among agents that increase bleeding risk when used concomitantly. This rule does not classify the combination as universally contraindicated.",
+      "recommendation": "Have a pharmacist or prescribing clinician review the combination and monitoring requirements. Do not change the regimen based on this prototype.",
+      "source": {
+        "name": "DailyMed warfarin sodium prescribing information",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/lookup.cfm?setid=26b8e43e-1a87-6655-e063-6394a90a1eaf",
+        "retrieved_at": "2026-10-06T00:00:00+00:00",
+        "section": "7.3 Drugs that Increase Bleeding Risk"
+      },
+      "validation_status": "prototype_source_review"
+    }
+  ]
+}
