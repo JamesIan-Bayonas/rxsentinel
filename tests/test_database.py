@@ -38,6 +38,7 @@ def test_upgrade_is_repeatable_and_has_foreign_keys(relational):
         "appearance_products",
         "image_assets",
         "reference_checks",
+        "collection_reviews",
     }
     assert len(inspector.get_foreign_keys("appearance_products")) == 2
 
