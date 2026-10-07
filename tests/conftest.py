@@ -2,9 +2,19 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-
 from rxsentinel.catalog import Catalog
 from rxsentinel.schemas import EvidenceSource, Ingredient, Product, RuleSet
+
+
+@pytest.fixture
+def anyio_backend():
+    return "asyncio"
+
+
+@pytest.fixture(autouse=True)
+def isolate_database_config(monkeypatch):
+    # Tests never inherit the real development database from .env.
+    monkeypatch.setenv("RXSENTINEL_DATABASE_URL", "")
 
 
 @pytest.fixture
