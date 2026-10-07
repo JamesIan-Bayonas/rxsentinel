@@ -1,8 +1,7 @@
 import pytest
 from pydantic import ValidationError
-
-from rxsentinel.schemas import AuditRequest, MedicationEntry
 from rxsentinel.safety import SafetyEngine
+from rxsentinel.schemas import AuditRequest, MedicationEntry
 
 
 def request(*products, confirmed=True):
@@ -53,7 +52,8 @@ def test_unknown_and_partial_mapping_are_excluded(catalog, rules):
     report = SafetyEngine(catalog, rules).audit(request("aspirin", "missing", "unresolved"))
     assert report.included_entry_ids == ["entry-0"]
     assert {e.reason for e in report.excluded_entries} == {
-        "unknown_product", "unresolved_ingredients"
+        "unknown_product",
+        "unresolved_ingredients",
     }
     assert not report.findings
     assert any("assessment is incomplete" in value for value in report.limitations)
@@ -62,7 +62,8 @@ def test_unknown_and_partial_mapping_are_excluded(catalog, rules):
 def test_combination_product_compares_each_ingredient(catalog, rules):
     report = SafetyEngine(catalog, rules).audit(request("combination", "metformin-a", "warfarin"))
     assert {f.kind for f in report.findings} == {
-        "possible_duplicate_ingredient", "documented_interaction"
+        "possible_duplicate_ingredient",
+        "documented_interaction",
     }
     assert report.evaluated_distinct_ingredient_pairs == 3
 
@@ -74,7 +75,9 @@ def test_one_combination_product_is_not_its_own_duplicate(catalog, rules):
 
 def test_duplicate_entry_ids_rejected():
     with pytest.raises(ValidationError, match="entry_id must be unique"):
-        AuditRequest(medications=[
-            MedicationEntry(entry_id="a", product_id="aspirin"),
-            MedicationEntry(entry_id="a", product_id="warfarin"),
-        ])
+        AuditRequest(
+            medications=[
+                MedicationEntry(entry_id="a", product_id="aspirin"),
+                MedicationEntry(entry_id="a", product_id="warfarin"),
+            ]
+        )
