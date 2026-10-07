@@ -7,7 +7,7 @@ from pathlib import Path
 
 import httpx
 
-from rxsentinel.catalog import Catalog
+from rxsentinel.catalog import configured_catalog
 from rxsentinel.schemas import EvidenceSource, Ingredient, Product
 
 DEFAULT_QUERIES = (
@@ -86,6 +86,7 @@ async def ingest(data_dir: Path, queries: list[str], limit: int) -> dict:
         follow_redirects=True,
         headers={"User-Agent": "RxSentinel-research-prototype/0.1"},
     ) as client:
+        rxnorm_version = await get_json(client, "https://rxnav.nlm.nih.gov/REST/version.json")
         for query in queries:
             url = str(
                 httpx.URL(
@@ -132,7 +133,9 @@ async def ingest(data_dir: Path, queries: list[str], limit: int) -> dict:
     if not products:
         raise ValueError("The import did not produce any validated products")
     raw_text = json.dumps(
-        {"openfda": raw_responses, "rxnorm": raw_mappings}, indent=2, ensure_ascii=False
+        {"openfda": raw_responses, "rxnorm": raw_mappings, "rxnorm_version": rxnorm_version},
+        indent=2,
+        ensure_ascii=False,
     )
     manifest = {
         "snapshot_id": snapshot_id,
@@ -146,6 +149,7 @@ async def ingest(data_dir: Path, queries: list[str], limit: int) -> dict:
         "queries": queries,
         "limit_per_query": limit,
         "raw_sha256": hashlib.sha256(raw_text.encode("utf-8")).hexdigest(),
+        "rxnorm_version": rxnorm_version,
         "notes": [
             "Metadata feasibility sample; not an exhaustive or representative product catalog.",
             "NDC presence does not establish FDA approval or validate listing accuracy.",
@@ -156,13 +160,14 @@ async def ingest(data_dir: Path, queries: list[str], limit: int) -> dict:
     # All network fetches and validation finish before the catalog is mutated.
     snapshot_dir = data_dir / "snapshots" / snapshot_id
     snapshot_dir.mkdir(parents=True, exist_ok=False)
-    (snapshot_dir / "raw.json").write_text(raw_text, encoding="utf-8")
+    # Write exact hashed bytes; Windows text-mode newline conversion changes checksums.
+    (snapshot_dir / "raw.json").write_bytes(raw_text.encode("utf-8"))
     (snapshot_dir / "products.json").write_text(
         json.dumps([p.model_dump(mode="json") for p in products.values()], indent=2),
         encoding="utf-8",
     )
     (snapshot_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    Catalog(data_dir / "catalog.sqlite").import_products(list(products.values()))
+    configured_catalog(data_dir).import_products(list(products.values()), manifest)
     return manifest
 
 
