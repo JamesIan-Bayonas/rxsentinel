@@ -20,15 +20,15 @@ class SafetyEngine:
         self.rules = rules
         self.graph = nx.MultiGraph()
         for rule in rules.rules:
-            self.graph.add_edge(
-                rule.ingredient_a, rule.ingredient_b, key=rule.rule_id, rule=rule
-            )
+            self.graph.add_edge(rule.ingredient_a, rule.ingredient_b, key=rule.rule_id, rule=rule)
 
     def audit(self, request: AuditRequest) -> AuditReport:
+        # One read gives every entry the same catalog view during concurrent imports.
+        products = {product.product_id: product for product in self.catalog.all()}
         included: dict[str, Product] = {}
         excluded: list[ExcludedEntry] = []
         for entry in request.medications:
-            product = self.catalog.get(entry.product_id)
+            product = products.get(entry.product_id)
             if not entry.identity_confirmed:
                 reason = "identity_unconfirmed"
             elif product is None:
@@ -99,10 +99,13 @@ class SafetyEngine:
             "Research prototype; rule coverage is limited and not a comprehensive clinical audit.",
             "Absence of a matching rule does not establish medication safety.",
             "Dose, schedule, patient history, allergies, and organ function are not assessed.",
-            "Reviewed identities are user assertions; the system does not independently verify them.",
+            "Reviewed identities are user assertions; "
+            "the system does not independently verify them.",
         ]
         if excluded:
-            limitations.append("Some medication entries were excluded; the assessment is incomplete.")
+            limitations.append(
+                "Some medication entries were excluded; the assessment is incomplete."
+            )
         return AuditReport(
             status=status,
             rule_set_version=self.rules.version,
